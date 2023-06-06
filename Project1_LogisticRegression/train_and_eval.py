@@ -22,19 +22,20 @@ Please split the
 """
 import torch
 from torch.utils.data import Dataset, DataLoader
+from torchvision import datasets, transforms
 
 
-class ImpletementDataset(Dataset):
-    def __init__(self, data_path):
-        pass
+class ImplementDataset(Dataset):
+    def __init__(self, data_path, transform=None):
+        self.data_path = data_path
+        self.transform = transform
+        self.dataset = datasets.ImageFolder(self.data_path, self.transform)
 
     def __len__(self):
-        pass
-        # return length
+        return len(self.dataset)
 
     def __getitem__(self, index):
-        pass
-        # return X_train, y_train, X_val, y_val
+        return self.dataset[index]
 
 
 class LogisticRegression:
@@ -80,13 +81,25 @@ class LogisticRegression:
         pass
 
 
-if __name__ == "main":
-    pass
+if __name__ == "__main__":
+    path = "./flower_images"
+    transform = transforms.Compose(
+        [
+            transforms.Resize(256),
+            transforms.CenterCrop(224),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        ]
+    )
+    dataset = ImplementDataset(path, transform)
+    for i in range(len(dataset)):
+        image, label = dataset[i]
+        print(image.shape)  # Should be same for all images
     # n_epoch = 20
     # batch_size = 4
     # n_hidden = [20, 10, 5]
     # model = LogisticRegression(n_hidden)
-    # data = ImpletementDataset()
+    # data = ImplementDataset()
     # results = []
     # data_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
     # for ep in range(n_epoch):
