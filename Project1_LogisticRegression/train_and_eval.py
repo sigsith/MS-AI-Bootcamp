@@ -25,7 +25,7 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision import datasets, transforms
 
 
-class ImplementDataset(Dataset):
+class CustomDataset(Dataset):
     def __init__(self, data_path, transform=None):
         self.data_path = data_path
         self.transform = transform
@@ -81,8 +81,9 @@ class LogisticRegression:
         pass
 
 
-if __name__ == "__main__":
-    path = "./flower_images"
+# Load image datasets and return the DataLoader
+# Assumes the data is organzied by the standard directory structure.
+def custom_load(path, batch_size, shuffle):
     transform = transforms.Compose(
         [
             transforms.Resize(256),
@@ -91,17 +92,16 @@ if __name__ == "__main__":
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ]
     )
-    dataset = ImplementDataset(path, transform)
-    for i in range(len(dataset)):
-        image, label = dataset[i]
-        print(image.shape)  # Should be same for all images
-    # n_epoch = 20
-    # batch_size = 4
-    # n_hidden = [20, 10, 5]
-    # model = LogisticRegression(n_hidden)
-    # data = ImplementDataset()
-    # results = []
-    # data_loader = DataLoader(data, batch_size=batch_size, shuffle=True)
+    dataset = CustomDataset(path, transform)
+    data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle)
+    return data_loader
+
+
+if __name__ == "__main__":
+    n_epoch = 20
+    n_hidden = [20, 10, 5]
+    data_loader = custom_load("./flower_images", batch_size=4, shuffle=true)
+    results = []
     # for ep in range(n_epoch):
     #     for X_train, y_train, X_val, y_val in data_loader():
     #         y_hat = model.forward(X_train)
