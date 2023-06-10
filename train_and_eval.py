@@ -117,13 +117,21 @@ def train(model, data_loader, n_epoch):
     return model
 
 
+def select_backend():
+    if torch.cuda.is_available():
+        return "cuda"
+    if torch.backends.mps.is_available():
+        return "mps"
+    return "cpu"
+
+
 if __name__ == "__main__":
     n_epoch = 20
     batch_size = 4
     num_samples = 100
     n_classes = 5
     # Warning: Can be very slow on cpu. Keep num_samples small.
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device(select_backend())
     data_loader = load(
         "./flower_images", batch_size=batch_size, num_samples=num_samples
     )
