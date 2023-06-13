@@ -20,7 +20,7 @@ class CustomDataset(Dataset):
         return self.dataset[index]
 
 
-# Custom CNN for image classification. (Because it's better!)
+# Custom CNN for image classification.
 class CustomNetwork(nn.Module):
     def __init__(self, n_classes):
         super(CustomNetwork, self).__init__()
@@ -86,7 +86,7 @@ class CustomNetwork(nn.Module):
 
 # Load image resources and return the DataLoader.
 # Assume the standard directory structure.
-def load(path, batch_size, num_samples=100):
+def load(path, batch_size):
     # (3, 224, 224) 3D tensors.
     transform = transforms.Compose(
         [
@@ -97,10 +97,7 @@ def load(path, batch_size, num_samples=100):
         ]
     )
     dataset = CustomDataset(path, transform)
-    indices = torch.randperm(len(dataset))[:num_samples]
-    sampler = torch.utils.data.SubsetRandomSampler(indices)
-    # Load only the subset per sampler.
-    data_loader = DataLoader(dataset, batch_size=batch_size, sampler=sampler)
+    data_loader = DataLoader(dataset, batch_size=batch_size)
     return data_loader
 
 
@@ -128,13 +125,9 @@ def select_backend():
 if __name__ == "__main__":
     n_epoch = 20
     batch_size = 4
-    num_samples = 100
     n_classes = 5
-    # Warning: Can be very slow on cpu. Keep num_samples small.
     device = torch.device(select_backend())
-    data_loader = load(
-        "./flower_images", batch_size=batch_size, num_samples=num_samples
-    )
+    data_loader = load("./flower_images", batch_size=batch_size)
     model = CustomNetwork(n_classes).to(device)
     model = train(model, data_loader, n_epoch)
     model.save("trained_weights.pt")
