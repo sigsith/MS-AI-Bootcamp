@@ -1,3 +1,3 @@
 # MS-AI-Bootcamp
  
-The dataset is [here](https://drive.google.com/drive/folders/1iZQwvBR4BAfkOyNFRU7_CHKy-nbz1p7R?usp=share_link).
+The dataset is [here](https://drive.google.com/file/d/1xFQK7WtF_bcwOefu_m5mcJBMWcUevq4y/view?usp=sharing).
