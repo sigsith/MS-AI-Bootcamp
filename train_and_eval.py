@@ -135,31 +135,53 @@ def evaluate(model, val_loader, device):
     return y_true, y_pred
 
 
-def compute_metrics(y_true, y_pred):
-    roc_auc = roc_auc_score(
-        LabelBinarizer().fit_transform(y_true),
-        LabelBinarizer().fit_transform(y_pred),
-    )
-    pr_auc = average_precision_score(
-        LabelBinarizer().fit_transform(y_true),
-        LabelBinarizer().fit_transform(y_pred),
-    )
-    precision = precision_score(y_true, y_pred, average="weighted")
-    recall = recall_score(y_true, y_pred, average="weighted")
-    return roc_auc, pr_auc, precision, recall
+def compute_metrics(y_true, y_pred, n_classes):
+    # Prepare multilabel format for multi-class data.
+    lb = LabelBinarizer()
+    lb.fit(range(n_classes))
+    y_true_bin = lb.transform(y_true)
+    y_pred_bin = lb.transform(y_pred)
+    # Calculate metrics for each class.
+    roc_aucs = roc_auc_score(y_true_bin, y_pred_bin, average=None)
+    pr_aucs = average_precision_score(y_true_bin, y_pred_bin, average=None)
+    precisions = precision_score(y_true_bin, y_pred_bin, average=None)
+    recalls = recall_score(y_true_bin, y_pred_bin, average=None)
+    # Calculate average metrics.
+    roc_auc_avg = roc_aucs.mean()
+    pr_auc_avg = pr_aucs.mean()
+    precision_avg = precisions.mean()
+    recall_avg = recalls.mean()
+    metrics = {
+        "roc_auc": roc_aucs,
+        "pr_auc": pr_aucs,
+        "precision": precisions,
+        "recall": recalls,
+        "roc_auc_avg": roc_auc_avg,
+        "pr_auc_avg": pr_auc_avg,
+        "precision_avg": precision_avg,
+        "recall_avg": recall_avg,
+    }
+    return metrics
 
 
-def train(model, train_loader, val_loader, n_epoch, device):
+def train(model, train_loader, val_loader, n_epoch, n_classes, device):
     model.to(device)
     for ep in range(n_epoch):
         model = train_one_epoch(model, train_loader, device)
         y_true, y_pred = evaluate(model, val_loader, device)
-        roc_auc, pr_auc, precision, recall = compute_metrics(y_true, y_pred)
+        metrics = compute_metrics(y_true, y_pred, n_classes)
         print(f"Epoch: {ep+1}")
-        print(f"ROC-AUC: {roc_auc}")
-        print(f"PR-AUC: {pr_auc}")
-        print(f"Precision: {precision}")
-        print(f"Recall: {recall}")
+        for i in range(n_classes):
+            print(f"Class {i}:")
+            print(f"ROC-AUC: {metrics['roc_auc'][i]}")
+            print(f"PR-AUC: {metrics['pr_auc'][i]}")
+            print(f"Precision: {metrics['precision'][i]}")
+            print(f"Recall: {metrics['recall'][i]}")
+        print("Average metrics:")
+        print(f"ROC-AUC: {metrics['roc_auc_avg']}")
+        print(f"PR-AUC: {metrics['pr_auc_avg']}")
+        print(f"Precision: {metrics['precision_avg']}")
+        print(f"Recall: {metrics['recall_avg']}")
     return model
 
 
@@ -175,12 +197,12 @@ def select_backend(seed):
 
 
 if __name__ == "__main__":
-    n_epoch = 8
+    n_epoch = 10
     batch_size = 4
     n_classes = 5
     device = torch.device(select_backend(42))
     train_loader = load("./flower_images/training", batch_size)
     val_loader = load("./flower_images/validation", batch_size)
     model = CustomNetwork(n_classes)
-    model = train(model, train_loader, val_loader, n_epoch, device)
+    model = train(model, train_loader, val_loader, n_epoch, n_classes, device)
     model.save("trained_weights.pt")
