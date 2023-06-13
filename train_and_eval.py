@@ -13,6 +13,7 @@ from sklearn.metrics import (
 )
 from sklearn.preprocessing import LabelBinarizer
 import numpy as np
+import json
 
 
 class CustomDataset(Dataset):
@@ -164,12 +165,15 @@ def compute_metrics(y_true, y_pred, n_classes):
     return metrics
 
 
-def train(model, train_loader, val_loader, n_epoch, n_classes, device):
+def train(model, train_loader, val_loader, n_epoch, n_classes, device, result_file):
     model.to(device)
     for ep in range(n_epoch):
         model = train_one_epoch(model, train_loader, device)
         y_true, y_pred = evaluate(model, val_loader, device)
         metrics = compute_metrics(y_true, y_pred, n_classes)
+        with open(result_file, "a") as f:
+            json.dump({"epoch": ep + 1, "metrics": metrics}, f, default=list)
+            f.write("\n")
         print(f"Epoch: {ep+1}")
         for i in range(n_classes):
             print(f"Class {i}:")
@@ -204,5 +208,7 @@ if __name__ == "__main__":
     train_loader = load("./flower_images/training", batch_size)
     val_loader = load("./flower_images/validation", batch_size)
     model = CustomNetwork(n_classes)
-    model = train(model, train_loader, val_loader, n_epoch, n_classes, device)
+    model = train(
+        model, train_loader, val_loader, n_epoch, n_classes, device, "results.json"
+    )
     model.save("trained_weights.pt")

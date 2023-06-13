@@ -153,3 +153,4 @@ cython_debug/
 .DS_Store
 flower_images/
 trained_weights.pt
+results.json
