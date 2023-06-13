@@ -14,6 +14,7 @@ from sklearn.metrics import (
 from sklearn.preprocessing import LabelBinarizer
 import numpy as np
 import json
+from tabulate import tabulate
 
 
 class CustomDataset(Dataset):
@@ -167,6 +168,7 @@ def compute_metrics(y_true, y_pred, n_classes):
 
 def train(model, train_loader, val_loader, n_epoch, n_classes, device, result_file):
     model.to(device)
+    headers = ["Class", "ROC-AUC", "PR-AUC", "Precision", "Recall"]
     for ep in range(n_epoch):
         model = train_one_epoch(model, train_loader, device)
         y_true, y_pred = evaluate(model, val_loader, device)
@@ -175,12 +177,17 @@ def train(model, train_loader, val_loader, n_epoch, n_classes, device, result_fi
             json.dump({"epoch": ep + 1, "metrics": metrics}, f, default=list)
             f.write("\n")
         print(f"Epoch: {ep+1}")
+        table_data = []
         for i in range(n_classes):
-            print(f"Class {i}:")
-            print(f"ROC-AUC: {metrics['roc_auc'][i]}")
-            print(f"PR-AUC: {metrics['pr_auc'][i]}")
-            print(f"Precision: {metrics['precision'][i]}")
-            print(f"Recall: {metrics['recall'][i]}")
+            row = [
+                f"Class {i+1}",
+                metrics["roc_auc"][i],
+                metrics["pr_auc"][i],
+                metrics["precision"][i],
+                metrics["recall"][i],
+            ]
+            table_data.append(row)
+        print(tabulate(table_data, headers=headers, tablefmt="fancy_grid"))
         print("Average metrics:")
         print(f"ROC-AUC: {metrics['roc_auc_avg']}")
         print(f"PR-AUC: {metrics['pr_auc_avg']}")
