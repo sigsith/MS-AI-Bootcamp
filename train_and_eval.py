@@ -5,6 +5,14 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 from torchvision import datasets, transforms
+from sklearn.metrics import (
+    roc_auc_score,
+    average_precision_score,
+    precision_score,
+    recall_score,
+)
+from sklearn.preprocessing import LabelBinarizer
+import numpy as np
 
 
 class CustomDataset(Dataset):
@@ -97,38 +105,82 @@ def load(path, batch_size):
         ]
     )
     dataset = CustomDataset(path, transform)
-    data_loader = DataLoader(dataset, batch_size=batch_size)
+    data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
     return data_loader
 
 
-def train(model, data_loader, n_epoch):
+def train_one_epoch(model, train_loader, device):
     model.train()
-    for ep in range(n_epoch):
-        for inputs, targets in data_loader:
-            inputs, targets = inputs.to(device), targets.to(device)
-            outputs = model(inputs)
-            loss = model.loss_fn(outputs, targets)
-            model.backward(loss)
-        # TODO: Display ROC-AUC, PR-AUC, Precision, Recall statistics.
-        print(f"Epoch: {ep+1}, Loss: {loss.item()}")
+    for inputs, targets in train_loader:
+        inputs, targets = inputs.to(device), targets.to(device)
+        outputs = model(inputs)
+        loss = model.loss_fn(outputs, targets)
+        model.backward(loss)
     return model
 
 
-def select_backend():
+def evaluate(model, val_loader, device):
+    model.eval()
+    all_outputs = []
+    all_labels = []
+    with torch.no_grad():
+        for inputs, labels in val_loader:
+            inputs, labels = inputs.to(device), labels.to(device)
+            outputs = model(inputs)
+            _, predicted = torch.max(outputs.data, 1)
+            all_outputs.extend(predicted.cpu().numpy())
+            all_labels.extend(labels.cpu().numpy())
+    y_pred = np.array(all_outputs)
+    y_true = np.array(all_labels)
+    return y_true, y_pred
+
+
+def compute_metrics(y_true, y_pred):
+    roc_auc = roc_auc_score(
+        LabelBinarizer().fit_transform(y_true),
+        LabelBinarizer().fit_transform(y_pred),
+    )
+    pr_auc = average_precision_score(
+        LabelBinarizer().fit_transform(y_true),
+        LabelBinarizer().fit_transform(y_pred),
+    )
+    precision = precision_score(y_true, y_pred, average="weighted")
+    recall = recall_score(y_true, y_pred, average="weighted")
+    return roc_auc, pr_auc, precision, recall
+
+
+def train(model, train_loader, val_loader, n_epoch, device):
+    model.to(device)
+    for ep in range(n_epoch):
+        model = train_one_epoch(model, train_loader, device)
+        y_true, y_pred = evaluate(model, val_loader, device)
+        roc_auc, pr_auc, precision, recall = compute_metrics(y_true, y_pred)
+        print(f"Epoch: {ep+1}")
+        print(f"ROC-AUC: {roc_auc}")
+        print(f"PR-AUC: {pr_auc}")
+        print(f"Precision: {precision}")
+        print(f"Recall: {recall}")
+    return model
+
+
+def select_backend(seed):
+    torch.manual_seed(seed)
     if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
         return "cuda"
     if torch.backends.mps.is_available():
+        torch.mps.manual_seed(seed)
         return "mps"
     return "cpu"
 
 
 if __name__ == "__main__":
-    n_epoch = 20
+    n_epoch = 8
     batch_size = 4
     n_classes = 5
-    device = torch.device(select_backend())
-    data_loader = load("./flower_images", batch_size=batch_size)
-    model = CustomNetwork(n_classes).to(device)
-    model = train(model, data_loader, n_epoch)
+    device = torch.device(select_backend(42))
+    train_loader = load("./flower_images/training", batch_size)
+    val_loader = load("./flower_images/validation", batch_size)
+    model = CustomNetwork(n_classes)
+    model = train(model, train_loader, val_loader, n_epoch, device)
     model.save("trained_weights.pt")
-    # TODO: Apply test samples and visualize results.
