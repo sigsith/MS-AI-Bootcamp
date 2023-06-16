@@ -168,32 +168,36 @@ def compute_metrics(y_true, y_pred, n_classes):
 
 def train(model, train_loader, val_loader, n_epoch, n_classes, device, result_file):
     model.to(device)
-    headers = ["Class", "ROC-AUC", "PR-AUC", "Precision", "Recall"]
     for ep in range(n_epoch):
+        print(f"Epoch: {ep+1}")
         model = train_one_epoch(model, train_loader, device)
         y_true, y_pred = evaluate(model, val_loader, device)
         metrics = compute_metrics(y_true, y_pred, n_classes)
         with open(result_file, "a") as f:
             json.dump({"epoch": ep + 1, "metrics": metrics}, f, default=list)
             f.write("\n")
-        print(f"Epoch: {ep+1}")
-        table_data = []
-        for i in range(n_classes):
-            row = [
-                f"Class {i+1}",
-                metrics["roc_auc"][i],
-                metrics["pr_auc"][i],
-                metrics["precision"][i],
-                metrics["recall"][i],
-            ]
-            table_data.append(row)
-        print(tabulate(table_data, headers=headers, tablefmt="fancy_grid"))
-        print("Average metrics:")
-        print(f"ROC-AUC: {metrics['roc_auc_avg']}")
-        print(f"PR-AUC: {metrics['pr_auc_avg']}")
-        print(f"Precision: {metrics['precision_avg']}")
-        print(f"Recall: {metrics['recall_avg']}")
+        print_metrics(model, val_loader, device, result_file)
     return model
+
+
+def print_metrics(metrics, n_classes):
+    headers = ["Class", "ROC-AUC", "PR-AUC", "Precision", "Recall"]
+    table_data = []
+    for i in range(n_classes):
+        row = [
+            f"Class {i+1}",
+            metrics["roc_auc"][i],
+            metrics["pr_auc"][i],
+            metrics["precision"][i],
+            metrics["recall"][i],
+        ]
+        table_data.append(row)
+    print(tabulate(table_data, headers=headers, tablefmt="fancy_grid"))
+    print("Average metrics:")
+    print(f"ROC-AUC: {metrics['roc_auc_avg']}")
+    print(f"PR-AUC: {metrics['pr_auc_avg']}")
+    print(f"Precision: {metrics['precision_avg']}")
+    print(f"Recall: {metrics['recall_avg']}")
 
 
 def select_backend(seed):
@@ -205,6 +209,11 @@ def select_backend(seed):
         torch.mps.manual_seed(seed)
         return "mps"
     return "cpu"
+
+
+def load_weights(model, path_weights):
+    model.load_state_dict(torch.load(path_weights))
+    return model
 
 
 if __name__ == "__main__":
