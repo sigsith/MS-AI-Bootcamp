@@ -54,7 +54,7 @@ class CustomNetwork(nn.Module):
         self.fc2 = nn.Linear(512, n_classes)
 
         # Stochastic Gradient Descent optimizer with learning rate of 0.01.
-        self.optimizer = optim.SGD(self.parameters(), lr=0.01)
+        self.optimizer = optim.Adam(self.parameters(), lr=0.00015)
 
         # Cross-Entropy Loss Function for multi-class classification.
         self.loss_fn = nn.CrossEntropyLoss()
@@ -208,7 +208,7 @@ def select_backend(seed):
 
 
 if __name__ == "__main__":
-    n_epoch = 10
+    n_epoch = 4
     batch_size = 4
     n_classes = 5
     device = torch.device(select_backend(42))
