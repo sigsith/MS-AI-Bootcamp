@@ -34,11 +34,9 @@ class CustomDataset(Dataset):
 class EfficientNetWrapper(nn.Module):
     def __init__(self, n_classes):
         super(EfficientNetWrapper, self).__init__()
-        self.effnet = EfficientNet.from_pretrained("efficientnet-b7")
+        self.effnet = EfficientNet.from_pretrained("efficientnet-b0")
         self.effnet._fc = nn.Linear(self.effnet._fc.in_features, n_classes)
-        self.optimizer = optim.RMSprop(
-            self.parameters(), lr=0.256, momentum=0.9, weight_decay=0.9
-        )
+        self.optimizer = optim.SGD(self.parameters(), lr=0.001, momentum=0.9)
         self.loss_fn = nn.CrossEntropyLoss()
 
     def forward(self, x):
@@ -110,9 +108,6 @@ class CustomNetwork(nn.Module):
 
         # Update parameters.
         self.optimizer.step()
-
-    def save(self, filename):
-        torch.save(self.state_dict(), filename)
 
 
 # Load image resources and return the DataLoader.
@@ -237,8 +232,12 @@ def load_weights(model, path_weights):
     return model
 
 
+def save(model, filename):
+    torch.save(model.state_dict(), filename)
+
+
 if __name__ == "__main__":
-    n_epoch = 8
+    n_epoch = 7
     batch_size = 4
     n_classes = 5
     device = torch.device(select_backend(42))
@@ -248,4 +247,4 @@ if __name__ == "__main__":
     model = train(
         model, train_loader, val_loader, n_epoch, n_classes, device, "results.json"
     )
-    model.save("effnet_trained_weights.pt")
+    save(model, "effnet_trained_weights.pt")

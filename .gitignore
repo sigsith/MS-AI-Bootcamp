@@ -154,3 +154,4 @@ cython_debug/
 flower_images/
 trained_weights.pt
 results.json
+effnet_trained_weights.pt
