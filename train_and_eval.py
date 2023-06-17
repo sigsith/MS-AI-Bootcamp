@@ -72,7 +72,7 @@ class CustomNetwork(nn.Module):
         # Input: 512 features, Output: n_classes.
         self.fc2 = nn.Linear(512, n_classes)
 
-        # Stochastic Gradient Descent optimizer with learning rate of 0.01.
+        # Adam optimizer with learning rate of 0.00015.
         self.optimizer = optim.Adam(self.parameters(), lr=0.00015)
 
         # Cross-Entropy Loss Function for multi-class classification.
