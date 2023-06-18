@@ -15,7 +15,6 @@ from sklearn.preprocessing import LabelBinarizer
 import numpy as np
 import json
 from tabulate import tabulate
-from efficientnet_pytorch import EfficientNet
 import random
 
 

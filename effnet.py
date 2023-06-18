@@ -1,4 +1,5 @@
 from prelude import *
+from efficientnet_pytorch import EfficientNet
 
 
 # Use EfficientNet (More tuning needed).
