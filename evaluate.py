@@ -4,7 +4,7 @@ import torch
 if __name__ == "__main__":
     batch_size = 4
     n_classes = 5
-    device = torch.device(train_and_eval.select_backend(42))
+    device = train_and_eval.pick_device()  # Seeds should not matter for eval
     val_loader = train_and_eval.load("./flower_images/validation", batch_size)
     model = train_and_eval.CustomNetwork(n_classes)
     model = train_and_eval.load_weights(model, "trained_weights.pt")

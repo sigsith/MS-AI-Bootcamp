@@ -15,6 +15,7 @@ import numpy as np
 import json
 from tabulate import tabulate
 from efficientnet_pytorch import EfficientNet
+import random
 
 
 class CustomDataset(Dataset):
@@ -177,6 +178,10 @@ def select_backend(seed):
     return "cpu"
 
 
+def pick_device(seed=random.randint(0, 0xFFFF_FFFF)):
+    torch.device(select_backend(seed))
+
+
 def load_weights(model, path_weights):
     model.load_state_dict(torch.load(path_weights))
     return model
@@ -190,7 +195,7 @@ if __name__ == "__main__":
     n_epoch = 7
     batch_size = 4
     n_classes = 5
-    device = torch.device(select_backend(42))
+    device = pick_device(42)
     train_loader = load("./flower_images/training", batch_size)
     val_loader = load("./flower_images/validation", batch_size)
     model = EfficientNetWrapper(n_classes)
