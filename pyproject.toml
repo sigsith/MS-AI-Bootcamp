@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "image-classification"
+version = "0.1.0"
+description = ""
+authors = ["yifei-yao <yaoyifei0@gmail.com>"]
+readme = "README.md"
+packages = [{include = "image_classification"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+torch = "^2.0.1"
+torchvision = "^0.15.2"
+scikit-learn = "^1.2.2"
+numpy = "^1.25.0"
+tabulate = "^0.9.0"
+efficientnet-pytorch = "^0.7.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
