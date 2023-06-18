@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -31,6 +30,7 @@ class CustomDataset(Dataset):
         return self.dataset[index]
 
 
+# Use EfficientNet (More tuning needed).
 class EfficientNetWrapper(nn.Module):
     def __init__(self, n_classes):
         super(EfficientNetWrapper, self).__init__()
@@ -49,64 +49,28 @@ class EfficientNetWrapper(nn.Module):
         self.optimizer.step()
 
 
-# Custom CNN for image classification.
+# Custom pure CNN.
 class CustomNetwork(nn.Module):
     def __init__(self, n_classes):
         super(CustomNetwork, self).__init__()
-        # Two convolutional layers followed by two fully connected layers.
-
-        # Convolutional Layer 1:
-        # Input: 3 channels (RGB), Output: 64 feature maps, Kernel size: 3x3.
         self.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1)
-
-        # Convolutional Layer 2:
-        # Input: 64 feature maps, Output: 128 feature maps, Kernel size: 3x3.
         self.conv2 = nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1)
-
-        # Fully Connected Layer 1:
-        # Input: 128x56x56 features (after two max-pooling layers),
-        # Output: 512 features.
         self.fc1 = nn.Linear(128 * 56 * 56, 512)
-
-        # Fully Connected Layer 2:
-        # Input: 512 features, Output: n_classes.
         self.fc2 = nn.Linear(512, n_classes)
-
-        # Adam optimizer with learning rate of 0.00015.
         self.optimizer = optim.Adam(self.parameters(), lr=0.00015)
-
-        # Cross-Entropy Loss Function for multi-class classification.
         self.loss_fn = nn.CrossEntropyLoss()
 
     def forward(self, x):
-        # Convolutional Layer 1 with rectifier and max pooling.
-        # Max pooling is set to kernel size 2x2 and stride 2.
         x = F.relu(F.max_pool2d(self.conv1(x), 2))
-
-        # Convolutional Layer 2. Same operation.
         x = F.relu(F.max_pool2d(self.conv2(x), 2))
-
-        # Flatten into a 2D tensor.
-        # Tensor size: [batch_size, 128*56*56].
         x = x.view(x.size(0), -1)
-
-        # Fully Connected Layer 1 followed by rectifier.
         x = F.relu(self.fc1(x))
-
-        # Fully Connected Layer 2 (output layer). No relu.
         x = self.fc2(x)
-
-        # Log-softmax activation to obtain class probabilities.
         return F.log_softmax(x, dim=1)
 
     def backward(self, loss):
-        # Reset gradients.
         self.optimizer.zero_grad()
-
-        # Compute gradients of the loss.
         loss.backward()
-
-        # Update parameters.
         self.optimizer.step()
 
 
@@ -164,20 +128,11 @@ def compute_metrics(y_true, y_pred, n_classes):
     pr_aucs = average_precision_score(y_true_bin, y_pred_bin, average=None)
     precisions = precision_score(y_true_bin, y_pred_bin, average=None)
     recalls = recall_score(y_true_bin, y_pred_bin, average=None)
-    # Calculate average metrics.
-    roc_auc_avg = roc_aucs.mean()
-    pr_auc_avg = pr_aucs.mean()
-    precision_avg = precisions.mean()
-    recall_avg = recalls.mean()
     metrics = {
         "roc_auc": roc_aucs,
         "pr_auc": pr_aucs,
         "precision": precisions,
         "recall": recalls,
-        "roc_auc_avg": roc_auc_avg,
-        "pr_auc_avg": pr_auc_avg,
-        "precision_avg": precision_avg,
-        "recall_avg": recall_avg,
     }
     return metrics
 
@@ -209,11 +164,6 @@ def print_metrics(metrics, n_classes):
         ]
         table_data.append(row)
     print(tabulate(table_data, headers=headers, tablefmt="fancy_grid"))
-    print("Average metrics:")
-    print(f"ROC-AUC: {metrics['roc_auc_avg']}")
-    print(f"PR-AUC: {metrics['pr_auc_avg']}")
-    print(f"Precision: {metrics['precision_avg']}")
-    print(f"Recall: {metrics['recall_avg']}")
 
 
 def select_backend(seed):
