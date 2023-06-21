@@ -11,7 +11,8 @@ class EfficientNetWrapper(nn.Module):
 
     def forward(self, x):
         x = self.effnet(x)
-        return F.log_softmax(x, dim=1)
+        return x
+        # return F.log_softmax(x, dim=1)
 
 
 if __name__ == "__main__":

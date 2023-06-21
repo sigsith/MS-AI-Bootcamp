@@ -152,6 +152,5 @@ cython_debug/
 .idea/
 .DS_Store
 flower_images/
-trained_weights.pt
 results.json
-effnet_trained_weights.pt
+*.pt

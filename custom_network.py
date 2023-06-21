@@ -16,7 +16,7 @@ class CustomNetwork(nn.Module):
         x = x.view(x.size(0), -1)
         x = F.relu(self.fc1(x))
         x = self.fc2(x)
-        return F.log_softmax(x, dim=1)
+        return x
 
 
 if __name__ == "__main__":
