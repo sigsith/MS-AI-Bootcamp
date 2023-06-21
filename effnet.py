@@ -8,17 +8,10 @@ class EfficientNetWrapper(nn.Module):
         super(EfficientNetWrapper, self).__init__()
         self.effnet = EfficientNet.from_pretrained("efficientnet-b0")
         self.effnet._fc = nn.Linear(self.effnet._fc.in_features, n_classes)
-        self.optimizer = optim.SGD(self.parameters(), lr=0.001, momentum=0.9)
-        self.loss_fn = nn.CrossEntropyLoss()
 
     def forward(self, x):
         x = self.effnet(x)
         return F.log_softmax(x, dim=1)
-
-    def backward(self, loss):
-        self.optimizer.zero_grad()
-        loss.backward()
-        self.optimizer.step()
 
 
 if __name__ == "__main__":
@@ -29,7 +22,17 @@ if __name__ == "__main__":
     train_loader = load("./flower_images/training", batch_size)
     val_loader = load("./flower_images/validation", batch_size)
     model = EfficientNetWrapper(n_classes)
+    optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
+    loss_fn = nn.CrossEntropyLoss()
     model = train(
-        model, train_loader, val_loader, n_epoch, n_classes, device, "results.json"
+        model,
+        optimizer,
+        loss_fn,
+        train_loader,
+        val_loader,
+        n_epoch,
+        n_classes,
+        device,
+        "results.json",
     )
     save(model, "effnet_trained_weights.pt")

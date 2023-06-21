@@ -48,13 +48,15 @@ def load(path, batch_size):
     return data_loader
 
 
-def train_one_epoch(model, train_loader, device):
+def train_one_epoch(model, optimizer, loss_fn, train_loader, device):
     model.train()
     for inputs, targets in train_loader:
         inputs, targets = inputs.to(device), targets.to(device)
         outputs = model(inputs)
-        loss = model.loss_fn(outputs, targets)
-        model.backward(loss)
+        loss = loss_fn(outputs, targets)
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
     return model
 
 
@@ -94,11 +96,21 @@ def compute_metrics(y_true, y_pred, n_classes):
     return metrics
 
 
-def train(model, train_loader, val_loader, n_epoch, n_classes, device, result_file):
+def train(
+    model,
+    optimizer,
+    loss_fn,
+    train_loader,
+    val_loader,
+    n_epoch,
+    n_classes,
+    device,
+    result_file,
+):
     model.to(device)
     for ep in range(n_epoch):
         print(f"Epoch: {ep+1}")
-        model = train_one_epoch(model, train_loader, device)
+        model = train_one_epoch(model, optimizer, loss_fn, train_loader, device)
         y_true, y_pred = evaluate(model, val_loader, device)
         metrics = compute_metrics(y_true, y_pred, n_classes)
         with open(result_file, "a") as f:
