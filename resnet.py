@@ -84,14 +84,14 @@ def resnet34(n_classes):
 
 
 if __name__ == "__main__":
-    n_epoch = 20
-    batch_size = 128
+    n_epoch = 51
+    batch_size = 100
     n_classes = 5
     device = pick_device(42)
     train_loader = load("./flower_images/training", batch_size)
     val_loader = load("./flower_images/validation", batch_size)
     model = resnet18(n_classes)
-    optimizer = optim.Adam(model.parameters(), 0.001, weight_decay=0.0001)
+    optimizer = optim.SGD(model.parameters(), 0.001, weight_decay=0.001, momentum=0.99)
     loss_fn = nn.CrossEntropyLoss()
     model = train(
         model,
@@ -104,4 +104,6 @@ if __name__ == "__main__":
         device,
         "results.json",
     )
-    save(model, "resnet_trained_weights.pt")
+    save(model, "resnet_trained_weights_f32.pt")
+    save(model, "resnet_trained_weights_f16.pt", precision=16)
+    save_int8(model, train_loader, "resnet_trained_weights_i8.pt")

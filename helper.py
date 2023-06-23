@@ -16,6 +16,7 @@ import numpy as np
 import json
 from tabulate import tabulate
 import random
+import copy
 
 
 class CustomDataset(Dataset):
@@ -155,5 +156,33 @@ def load_weights(model, path_weights):
     return model
 
 
-def save(model, filename):
+def save(model, filename, precision=32):
+    model = copy.deepcopy(model)
+    match precision:
+        case 32:
+            torch.save(model.state_dict(), filename)
+        case 16:
+            model = model.to(torch.float16)
+            torch.save(model.state_dict(), filename)
+        case _:
+            print(f"Invalid precision: {precision}", file=sys.stderr)
+
+
+def calibrate(model, calib_data_loader):
+    # mps will not work due to incomplete implementation.
+    device = torch.device("cpu")
+    model.to(device)
+    for images, _ in calib_data_loader:
+        images = images.to(device).float()
+        _ = model(images)
+
+
+# Built in quantization: https://pytorch.org/docs/stable/quantization.html.
+def save_int8(model, calib_data_loader, filename):
+    model = copy.deepcopy(model)
+    model.eval()
+    model.qconfig = torch.quantization.get_default_qconfig("fbgemm")
+    torch.quantization.prepare(model, inplace=False)
+    calibrate(model, calib_data_loader)
+    torch.quantization.convert(model, inplace=False)
     torch.save(model.state_dict(), filename)
