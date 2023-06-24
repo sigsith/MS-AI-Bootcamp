@@ -5,7 +5,7 @@ import resnet
 import time
 
 if __name__ == "__main__":
-    batch_size = 4
+    batch_size = 10
     n_classes = 5
 
     load_start = time.time()
@@ -23,6 +23,7 @@ if __name__ == "__main__":
 
     metrics = compute_metrics(y_true, y_pred, n_classes)
     print_metrics(metrics, n_classes)
+    n_image = len(val_loader) * batch_size
     print(
-        f"Eval time: {eval_time * 1000:.2f} ms ({float(len(val_loader)) / eval_time:.2f} image/s)"
+        f"Eval time: {eval_time * 1000:.2f} ms ({float(n_image) / eval_time:.2f} image/s)"
     )

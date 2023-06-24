@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "image-classification"
+name = "image-class"
 version = "0.1.0"
 description = ""
 authors = ["yifei-yao <yaoyifei0@gmail.com>"]
