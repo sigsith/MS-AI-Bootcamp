@@ -67,6 +67,10 @@ def load_cifar10(batch_size, training=False):
     ]
     transform = transforms.Compose(transform_list)
     if training:
+        transform_list = [
+            transforms.RandomHorizontalFlip(),
+            transforms.RandomCrop(32, padding=4),
+        ] + transform_list
         train_set = CIFAR10(
             root="./data", download=True, train=True, transform=transform
         )
