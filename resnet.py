@@ -56,9 +56,13 @@ class ResNetShallow(nn.Module):
         self.conv2 = block_chain(64, 64, block_config[0], False)
         self.conv3 = block_chain(64, 128, block_config[1], True)
         self.conv4 = block_chain(128, 256, block_config[2], True)
-        self.conv5 = block_chain(256, 512, block_config[3], True)
+        if len(block_config) == 4:
+            self.conv5 = block_chain(256, 512, block_config[3], True)
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         self.fc = nn.Linear(512, n_classes)
+        if len(block_config) == 3:
+            self.fc = nn.Linear(256, n_classes)
+        self.length = len(block_config)
 
     def forward(self, x):
         x = self.conv1(x)
@@ -68,7 +72,8 @@ class ResNetShallow(nn.Module):
         x = self.conv2(x)
         x = self.conv3(x)
         x = self.conv4(x)
-        x = self.conv5(x)
+        if self.length == 4:
+            x = self.conv5(x)
         x = self.avgpool(x)
         x = x.view(x.size(0), -1)
         x = self.fc(x)
@@ -83,14 +88,19 @@ def resnet34(n_classes):
     return ResNetShallow([3, 4, 6, 3], n_classes)
 
 
+def resnet_cifar(n_classes, layers):
+    chain_size = (layers - 2) // 3
+    return ResNetShallow([chain_size, chain_size, chain_size], n_classes)
+
+
 if __name__ == "__main__":
     n_epoch = 51
     batch_size = 100
     n_classes = 5
     device = pick_device(42)
-    train_loader = load("./flower_images/training", batch_size)
-    val_loader = load("./flower_images/validation", batch_size)
-    model = resnet18(n_classes)
+    train_loader = load("./flower_images/training", batch_size, downsampling=7)
+    val_loader = load("./flower_images/validation", batch_size, downsampling=7)
+    model = resnet_cifar(n_classes, 20)
     optimizer = optim.SGD(model.parameters(), 0.001, weight_decay=0.001, momentum=0.99)
     loss_fn = nn.CrossEntropyLoss()
     model = train(

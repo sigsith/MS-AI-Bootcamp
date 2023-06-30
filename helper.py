@@ -35,16 +35,24 @@ class CustomDataset(Dataset):
 
 # Load image resources and return the DataLoader.
 # Assume the standard directory structure.
-def load(path, batch_size):
+def load(path, batch_size, downsampling=1):
     # (3, 224, 224) 3D tensors.
-    transform = transforms.Compose(
-        [
-            transforms.Resize(256),
-            transforms.CenterCrop(224),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-        ]
-    )
+    transform_list = [
+        transforms.Resize(256),
+        transforms.CenterCrop(224),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+    ]
+    if downsampling != 1:
+        transform_list.insert(
+            2,
+            transforms.Lambda(
+                lambda img: transforms.functional.resize(
+                    img, (224 // downsampling, 224 // downsampling)
+                )
+            ),
+        )
+    transform = transforms.Compose(transform_list)
     dataset = CustomDataset(path, transform)
     data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
     return data_loader
