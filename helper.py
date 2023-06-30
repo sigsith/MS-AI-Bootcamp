@@ -5,11 +5,13 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 from torchvision import datasets, transforms
+from torchvision.datasets import CIFAR10
 from sklearn.metrics import (
     roc_auc_score,
     average_precision_score,
     precision_score,
     recall_score,
+    accuracy_score,
 )
 from sklearn.preprocessing import LabelBinarizer
 import numpy as np
@@ -58,6 +60,24 @@ def load(path, batch_size, downsampling=1):
     return data_loader
 
 
+def load_cifar10(batch_size, training=False):
+    transform_list = [
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+    ]
+    transform = transforms.Compose(transform_list)
+    if training:
+        train_set = CIFAR10(
+            root="./data", download=True, train=True, transform=transform
+        )
+        return DataLoader(train_set, batch_size=batch_size, shuffle=True)
+    else:
+        test_set = CIFAR10(
+            root="./data", download=True, train=False, transform=transform
+        )
+        return DataLoader(test_set, batch_size=batch_size, shuffle=False)
+
+
 def train_one_epoch(model, optimizer, loss_fn, train_loader, device):
     model.train()
     for inputs, targets in train_loader:
@@ -97,11 +117,14 @@ def compute_metrics(y_true, y_pred, n_classes):
     pr_aucs = average_precision_score(y_true_bin, y_pred_bin, average=None)
     precisions = precision_score(y_true_bin, y_pred_bin, average=None)
     recalls = recall_score(y_true_bin, y_pred_bin, average=None)
+    accuracy = accuracy_score(y_true_bin, y_pred_bin)
+    error_rate = 1 - accuracy
     metrics = {
         "roc_auc": roc_aucs,
         "pr_auc": pr_aucs,
         "precision": precisions,
         "recall": recalls,
+        "error_rate": error_rate,
     }
     return metrics
 
@@ -143,6 +166,7 @@ def print_metrics(metrics, n_classes):
         ]
         table_data.append(row)
     print(tabulate(table_data, headers=headers, tablefmt="fancy_grid"))
+    print(f"Average Error Rate: {metrics['error_rate'] * 100:.2f}%")
 
 
 def select_backend(seed):

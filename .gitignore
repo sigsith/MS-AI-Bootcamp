@@ -154,3 +154,4 @@ cython_debug/
 flower_images/
 results.json
 *.pt
+data/

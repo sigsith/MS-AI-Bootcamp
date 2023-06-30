@@ -96,10 +96,12 @@ def resnet_cifar(n_classes, layers):
 if __name__ == "__main__":
     n_epoch = 51
     batch_size = 100
-    n_classes = 5
+    n_classes = 10
     device = pick_device(42)
-    train_loader = load("./flower_images/training", batch_size, downsampling=7)
-    val_loader = load("./flower_images/validation", batch_size, downsampling=7)
+    # train_loader = load("./flower_images/training", batch_size, downsampling=7)
+    # val_loader = load("./flower_images/validation", batch_size, downsampling=7)
+    train_loader = load_cifar10(batch_size, training=True)
+    val_loader = load_cifar10(batch_size)
     model = resnet_cifar(n_classes, 20)
     optimizer = optim.SGD(model.parameters(), 0.001, weight_decay=0.001, momentum=0.99)
     loss_fn = nn.CrossEntropyLoss()
