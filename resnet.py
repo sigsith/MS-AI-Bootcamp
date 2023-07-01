@@ -47,12 +47,21 @@ def block_chain(in_channel, channel, length, do_down_sampling):
 
 # Generic basic Resnet. No bottleneck blocks.
 class ResNetShallow(nn.Module):
-    def __init__(self, block_config, n_classes):
+    def __init__(self, block_config, n_classes, cifar=False):
         super(ResNetShallow, self).__init__()
-        self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3, bias=False)
+        self.cifar = cifar
+        self.conv1 = nn.Conv2d(
+            3,
+            64,
+            kernel_size=3 if cifar else 7,
+            stride=1 if cifar else 2,
+            padding=3,
+            bias=False,
+        )
         self.bn1 = nn.BatchNorm2d(64)
         self.relu = nn.ReLU(inplace=True)
-        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+        if not cifar:
+            self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         self.conv2 = block_chain(64, 64, block_config[0], False)
         self.conv3 = block_chain(64, 128, block_config[1], True)
         self.conv4 = block_chain(128, 256, block_config[2], True)
@@ -68,7 +77,8 @@ class ResNetShallow(nn.Module):
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
-        x = self.maxpool(x)
+        if not self.cifar:
+            x = self.maxpool(x)
         x = self.conv2(x)
         x = self.conv3(x)
         x = self.conv4(x)
@@ -88,14 +98,17 @@ def resnet34(n_classes):
     return ResNetShallow([3, 4, 6, 3], n_classes)
 
 
+# Todo: Implement bottleneck blocks for deeper resnet
+
+
 def resnet_cifar(n_classes, layers):
     chain_size = (layers - 2) // 3
-    return ResNetShallow([chain_size, chain_size, chain_size], n_classes)
+    return ResNetShallow([chain_size, chain_size, chain_size], n_classes, cifar=True)
 
 
 if __name__ == "__main__":
     n_epoch = 1000
-    batch_size = 256
+    batch_size = 128
     n_classes = 10
     device = pick_device(42)
     train_loader = load_cifar10(batch_size, training=True)
