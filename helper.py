@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import Dataset, DataLoader
 from torchvision import datasets, transforms
 from torchvision.datasets import CIFAR10
@@ -143,11 +144,14 @@ def train(
     n_classes,
     device,
     result_file,
+    scheduler=None,
 ):
     model.to(device)
     for ep in range(n_epoch):
         print(f"Epoch: {ep+1}")
         model = train_one_epoch(model, optimizer, loss_fn, train_loader, device)
+        if scheduler != None:
+            scheduler.step()
         y_true, y_pred = evaluate(model, val_loader, device)
         metrics = compute_metrics(y_true, y_pred, n_classes)
         with open(result_file, "a") as f:

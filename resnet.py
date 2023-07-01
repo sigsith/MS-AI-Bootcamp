@@ -114,7 +114,8 @@ if __name__ == "__main__":
     train_loader = load_cifar10(batch_size, training=True)
     val_loader = load_cifar10(batch_size)
     model = resnet_cifar(n_classes, 20)
-    optimizer = optim.Adam(model.parameters(), 0.001, weight_decay=0.0001)
+    optimizer = optim.SGD(model.parameters(), 0.1, momentum=0.9, weight_decay=0.0001)
+    scheduler = StepLR(optimizer, step_size=10, gamma=0.1)
     loss_fn = nn.CrossEntropyLoss()
     model = train(
         model,
@@ -126,6 +127,7 @@ if __name__ == "__main__":
         n_classes,
         device,
         "results.json",
+        scheduler=scheduler,
     )
     save(model, "resnet_trained_weights_f32.pt")
     save(model, "resnet_trained_weights_f16.pt", precision=16)
