@@ -66,21 +66,14 @@ def load_cifar10(batch_size, training=False):
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ]
-    transform = transforms.Compose(transform_list)
     if training:
         transform_list = [
             transforms.RandomHorizontalFlip(),
             transforms.RandomCrop(32, padding=4),
         ] + transform_list
-        train_set = CIFAR10(
-            root="./data", download=True, train=True, transform=transform
-        )
-        return DataLoader(train_set, batch_size=batch_size, shuffle=True)
-    else:
-        test_set = CIFAR10(
-            root="./data", download=True, train=False, transform=transform
-        )
-        return DataLoader(test_set, batch_size=batch_size, shuffle=False)
+    transform = transforms.Compose(transform_list)
+    dataset = CIFAR10(root="./data", download=True, train=training, transform=transform)
+    return DataLoader(dataset, batch_size=batch_size, shuffle=training)
 
 
 def train_one_epoch(model, optimizer, loss_fn, train_loader, device):
