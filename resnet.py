@@ -115,7 +115,8 @@ if __name__ == "__main__":
     val_loader = load_cifar10(batch_size)
     model = resnet_cifar(n_classes, 20)
     optimizer = optim.SGD(model.parameters(), 0.1, momentum=0.9, weight_decay=0.0001)
-    scheduler = StepLR(optimizer, step_size=10, gamma=0.1)
+    # scheduler = StepLR(optimizer, step_size=10, gamma=0.1)
+    scheduler = ReduceLROnPlateau(optimizer, mode="min", factor=0.5, patience=2)
     loss_fn = nn.CrossEntropyLoss()
     model = train(
         model,
